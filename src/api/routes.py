@@ -1,65 +1,64 @@
+"""
+This module takes care of starting the API Server, Loading the DB and Adding the endpoints
+"""
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User
 from api.utils import generate_sitemap, APIException
-from flask_jwt_extended import JWTManager, create_access_token,jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
 
 api = Blueprint('api', __name__)
 
-app = Flask(__name__)
-
-app.config["JWT_SECRET_KEY"] = "super12mega-secret"  # Change this "super secret" with something else!
-jwt = JWTManager(app)
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():
 
     response_body = {
-        "message": "Hello! I'm a message that came from the backend"
+        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
     }
 
-    return jsonify(response_body), 200
+    return jsonify(response_body), 200  
 
+#Este funciona perfecto con el cliente (postman) y (app-front)
+@api.route('/registro', methods=['POST']) 
+def add_user():
+    request_body = request.get_json()
+    name = request_body["name"]
+    email = request_body["email"] 
+    password = request_body["password"]
+   
 
-@api.route("/signup", methods=["POST"])
-def sign_up():
-   email = request.json.get("email",None)
-   password = request.json.get("password", None)
-   is_active = request.json.get("is_active", None)
-       
-   user = User(email = email, password = password, is_active = is_active)
-   json= request.get_json()
-
-   db.session.add(user)
-   db.session.commit()
-       
-   return jsonify([]), 200
-
-    
-@api.route("/users", methods=["GET"])
-def get_users():
-    users = User.query.all()
-    users = list(map (lambda user: user.serialize(), users))
-    
-    return jsonify(users), 200
-
-@api.route("/login", methods=["POST"])
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify({"msg":"Usuario ya existe"}), 444
+    else:
+        new_user = User(name=name,email=email,password=password,is_active=True)
+        db.session.add(new_user)
+        db.session.commit()
+        print(new_user)
+        return jsonify({"msg":"Usuario registrado exitosamente"}), 200
+   
+#route con POST LOGIN
+# Create a route to authenticate your users and return JWTs. The
+# create_access_token() function is used to actually generate the JWT.
+@api.route("/token", methods=["POST"])
 def create_token():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-   
-    user = User.query.filter_by(email=email, password=password).first()
-    if user is None:
-      
+    if email != "test" or password != "test":
         return jsonify({"msg": "Bad username or password"}), 401
-    
-    access_token = create_access_token(identity = user.id)
-    return jsonify({ "token": access_token, "user_id": user.id })
 
-@api.route("/protected", methods=["GET"])
+    access_token = create_access_token(identity=email)
+    return jsonify(access_token=access_token) 
+
+
+#@jwt_required()
+@api.route("/private", methods=["GET"])
 @jwt_required()
-def protected():
-    
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    
-    return jsonify({"id": user.id, "email": user.email }), 200
+def get_private():
+
+    email = get_jwt_identity()
+    dictionary = {"message": "Bienvenid@, " + email}
+   
+    return jsonify(dictionary) 

@@ -2,51 +2,97 @@ const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
 			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			],
-			user_token: null
+			token: null,
+
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			//Fetch POST usuario ------------------------>>>>>>>>>>>>>>>>>>>>>
+			setRegistro: (registro) => {
+				var myHeaders = new Headers();
+				myHeaders.append("Content-Type", "application/json");
+
+				var raw = JSON.stringify(registro);
+
+				var requestOptions = {
+					method: "POST",
+					headers: myHeaders,
+					body: raw,
+					redirect: "follow",
+				};
+
+				fetch(
+					"https://3001-4geeksacademy-reactflask-j7ddulb4pgy.ws-us30.gitpod.io/api/registro",
+					requestOptions
+				)
+					.then((response) => response.json())
+					.then((result) => console.log(result))
+					.catch((error) => console.log("error", error));
 			},
 
-			getMessage: () => {
-				// fetching data from the backend
-				fetch(process.env.BACKEND_URL + "/api/hello")
-					.then(resp => resp.json())
-					.then(data => setStore({ message: data.message }))
-					.catch(error => console.log("Error loading message from backend", error));
+			tokenSessionStorage: () => {
+				const token = sessionStorage.getItem("token");
+				console.log("aplicación recién cargada, sincronizando el token de almacenamiento de la sesión");
+				if (token && token != "" && token != undefined) setStore({ token: token })
 			},
-			changeColor: (index, color) => {
-				//get the store
+
+			logout: () => {
+				sessionStorage.removeItem("token");
+				console.log("logout");
+				setStore({ token: null })
+				//console.log(store.token);
+			},
+			/* ------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+			privateMessage: () => {
 				const store = getStore();
+				var requestOptions = {
+					method: 'GET',
+					headers: { Authorization: "Bearer" + " " + store.token },
+					redirect: 'follow'
+				};
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
+				fetch("https://3001-4geeksacademy-reactflask-j7ddulb4pgy.ws-us30.gitpod.io/api/private", requestOptions)
+					.then(response => response.json())
+					.then(result => setStore({ message: result.message }))
+					.catch(error => console.log('error', error));
+			},
+
+
+			//Fetch POST token ------------------------>>>>>>>>>>>>>>>>>>>>>
+			setLogin: (email, password) => {
+				var myHeaders = new Headers();
+				myHeaders.append("Content-Type", "application/json");
+
+				var raw = JSON.stringify({
+					email: email,
+					password: password,
 				});
 
-				//reset the global store
-				setStore({ demo: demo });
+				var requestOptions = {
+					method: "POST",
+					headers: myHeaders,
+					body: raw,
+					redirect: "follow",
+				};
+
+				fetch(
+					"https://3001-4geeksacademy-reactflask-j7ddulb4pgy.ws-us30.gitpod.io/api/token",
+					requestOptions
+				)
+					.then((response) => {
+						if (response.status == 200) return response.json();
+						else alert("hay un error");
+						return false;
+					})
+
+					.then((result) => {
+						console.log("Esto viene del backend", result);
+						sessionStorage.setItem("token", result.access_token);
+						setStore({ token: result.access_token })
+						return true;
+					})
+					.catch((error) => console.log("error", error));
 			},
-			setUser_token: token => {
-				setStore({ user_token: token });
-			}
-		}
+		},
 	};
 };
 

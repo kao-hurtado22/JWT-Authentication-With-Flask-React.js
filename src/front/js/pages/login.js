@@ -1,104 +1,66 @@
-import React from "react";
-import { useForm } from "react-hook-form";
+import React, { useContext, useState } from "react";
+import { useHistory } from "react-router-dom";
+import { Context } from "../store/appContext";
+
 
 export const Login = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
-    const onSubmit = evento => { console.log(evento); }
+    const { store, actions } = useContext(Context);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const history = useHistory();
+    console.log("este es tu token" + " " + store.token);
 
+    const handleClick = (e) => {
+        e.preventDefault();
+        console.log(email, password);
+        actions.setLogin(email, password);//.then(() => { history.push('/')})
+    };
+
+    if (store.token && store.token != "" && store.token != undefined) history.push("/");
     return (
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-
-            <div className="login">
-                <div className="login-screen">
-                    <div className="app-title">
-                        <h1>Iniciar Sesión</h1>
-                    </div>
-                    <div className="mb-3">
-                        <label htmlFor="exampleInputEmail1" className="form-label">
-                            Email address
-                        </label>
-                        <input
-                            type="email"
-                            className="form-control"
-                            id="exampleInputEmail1"
-                            aria-describedby="emailHelp"
-                        />
-                        <div className="invalid-feedback">Please choose a username.</div>
-                    </div>
-
-                </div>
-
-                <div className="mb-3">
-                    <label htmlFor="exampleInputPassword1" className="form-label">
-                        Password
-                    </label>
-                    <input type="password" className="form-control" id="exampleInputPassword1" />
-                </div>
-
-
-                {/* <div className="login-form">
-                        <div className="control-group">
-                            <label htmlFor="exampleInputEmail1" className="form-label-name">
-                                Correo
-                            </label>
+        <div className="container bg-secondary p-4 mt-4 shadow-sm">
+            <form className="form">
+                <h2 className="text-center mt-4">Login</h2>
+                {/* un renderizado condicioanl */}
+                {store.token && store.token != "" && store.token != undefined ? (
+                    "tu estas logeado con este token " + " " + store.token
+                ) : (
+                    <div className="container w-50">
+                        <div className="row">
+                            <label>Email</label>
                             <input
                                 type="text"
-                                className="login-field"
-                                defaultValue=""
-                                placeholder="ejemplo@gmail.com"
-                                id="login-name"
-                                {...register("email", {
-                                    required: {
-                                        value: true,
-                                        message: "El correo es requerido"
-                                    },
-                                    pattern: {
-                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
-                                        message: "El formato no es correcto"
-                                    }
-                                })}
+                                className="form-control"
+                                name="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
-                            {errors.email && <span>{errors.email.message}</span>}
-                            <label className="login-field-icon fui-user" htmlFor="login-name" />
                         </div>
-                        <div className="control-group">
-                            <label htmlFor="exampleInputPassword1" className="form-label-pass">
-                                Password
-                            </label>
+
+                        <div className="row">
+                            <label>Password</label>
                             <input
                                 type="password"
-                                className="login-field"
-                                defaultValue=""
-                                placeholder="Password"
-                                id="login-pass"
-                                {...register("password", {
-                                    required: {
-                                        value: true,
-                                        message: "El campo es requerido"
-                                    },
-                                    minLength: {
-                                        value: 6,
-                                        message: "La contraseña debe tener al menos 6 caracteres"
-                                    }
-                                })}
+                                className="form-control"
+                                name="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
-                            {errors.password && <span>{errors.password.message}</span>}
-                            <label className="login-field-icon fui-lock" htmlFor="login-pass" />
-                        </div> */}
-                <button className="btn btn-primary btn-large btn-block" href="#">
-                    Iniciar Sesión
-                </button>
-                <a className="login-link" href="#">
-                    ¿Aún no tienes tu cuenta?
-                </a>
-                <a className="registrate" href="#">
-                    ¡Registrate!
-                </a>
-            </div>
-            {/* </div> */}
+                        </div>
 
-        </form >
-
+                        <div className="row mt-3">
+                            <button
+                                type="submit"
+                                className="btn btn-dark btn-sm m-auto w-25"
+                                onClick={handleClick}
+                            >
+                                Send
+                            </button>
+                            <p className="bg-warning text-center mt-5">Ingresa "test" para ambos inputs, login de prueba</p>
+                        </div>
+                    </div>
+                )}
+            </form>
+        </div>
     );
 };
